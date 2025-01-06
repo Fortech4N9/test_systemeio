@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      db:
+      postgres:
         image: postgres:13
         env:
           POSTGRES_DB: symfony_test
@@ -38,6 +38,13 @@ jobs:
 
     - name: Install dependencies
       run: composer install
+
+    - name: Wait for PostgreSQL
+      run: |
+        until pg_isready -h postgres -U symfony; do
+          echo "Waiting for PostgreSQL to be ready..."
+          sleep 1
+        done
 
     - name: Create test database
       run: php bin/console doctrine:database:create --env=test
