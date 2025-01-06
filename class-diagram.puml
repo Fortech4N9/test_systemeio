@@ -1,0 +1,77 @@
+@startuml
+
+namespace App\Entity {
+    class Product {
+        - int $id
+        - string $name
+        - float $price
+        + getId(): int
+        + getName(): string
+        + setName(string $name): self
+        + getPrice(): float
+        + setPrice(float $price): self
+    }
+
+    class Coupon {
+        - int $id
+        - string $code
+        - float $discountAmount
+        - float $discountPercentage
+        + getId(): int
+        + getCode(): string
+        + setCode(string $code): self
+        + getDiscountAmount(): float
+        + setDiscountAmount(float $discountAmount): self
+        + getDiscountPercentage(): float
+        + setDiscountPercentage(float $discountPercentage): self
+    }
+}
+
+namespace App\Service\Payment {
+    interface PaymentProcessorInterface {
+        + process(float $amount): bool
+    }
+
+    abstract class AbstractPaymentProcessor implements PaymentProcessorInterface {
+        + process(float $amount): bool
+    }
+
+    class PaypalPaymentProcessor extends AbstractPaymentProcessor {
+        + process(float $amount): bool
+    }
+
+    class StripePaymentProcessor extends AbstractPaymentProcessor {
+        + process(float $amount): bool
+    }
+
+    enum PaymentType {
+        PAYPAL
+        STRIPE
+    }
+}
+
+namespace App\Controller {
+    class PriceController {
+        - EntityManagerInterface $entityManager
+        + calculatePrice(Request $request, ValidatorInterface $validator): JsonResponse
+    }
+
+    class PurchaseController {
+        - EntityManagerInterface $entityManager
+        - PaymentProcessor $paymentProcessor
+        + purchase(Request $request, ValidatorInterface $validator): JsonResponse
+    }
+}
+
+App\Entity\Product --> App\Repository\ProductRepository
+App\Entity.Coupon --> App\Repository\CouponRepository
+App\Service\Payment\PaypalPaymentProcessor --> App\Service\Payment\AbstractPaymentProcessor
+App\Service\Payment\StripePaymentProcessor --> App\Service\Payment\AbstractPaymentProcessor
+App\Service\Payment\AbstractPaymentProcessor --> App\Service\Payment\PaymentProcessorInterface
+App\Controller\PriceController --> App\Entity\Product
+App\Controller\PriceController --> App\Entity\Coupon
+App\Controller\PurchaseController --> App\Entity\Product
+App\Controller\PurchaseController --> App\Entity\Coupon
+App\Controller\PurchaseController --> App\Service\Payment\PaymentProcessor
+
+@enduml
