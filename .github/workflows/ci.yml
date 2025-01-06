@@ -11,42 +11,31 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    services:
-      db:
-        image: postgres:13
-        env:
-          POSTGRES_DB: symfony_test
-          POSTGRES_USER: symfony
-          POSTGRES_PASSWORD: symfony
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U symfony"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.1'
-        extensions: mbstring, intl, pdo_pgsql
-        coverage: xdebug
+    - name: Set up Docker
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose
+
+    - name: Set up Docker Compose
+      run: docker-compose up -d
 
     - name: Install dependencies
-      run: composer install
+      run: docker-compose exec -T app composer install
 
     - name: Create test database
-      run: php bin/console doctrine:database:create --env=test
+      run: docker-compose exec -T app php bin/console doctrine:database:create --env=test
 
     - name: Run migrations
-      run: php bin/console doctrine:migrations:migrate --env=test --no-interaction
+      run: docker-compose exec -T app php bin/console doctrine:migrations:migrate --env=test --no-interaction
 
     - name: Load fixtures
-      run: php bin/console doctrine:fixtures:load --env=test --no-interaction
+      run: docker-compose exec -T app php bin/console doctrine:fixtures:load --env=test --no-interaction
 
     - name: Run tests
-      run: vendor/bin/phpunit
+      run: docker-compose exec -T app vendor/bin/phpunit
+
+    - name: Tear down Docker Compose
+      run: docker-compose down
