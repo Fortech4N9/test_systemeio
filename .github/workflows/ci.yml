@@ -23,19 +23,19 @@ jobs:
       run: docker-compose up -d
 
     - name: Install dependencies
-      run: docker-compose exec app composer install
+      run: docker-compose exec -T app composer install
 
     - name: Create test database
-      run: docker-compose exec app php bin/console doctrine:database:create --env=test
+      run: docker-compose exec -T app php bin/console doctrine:database:create --env=test
 
     - name: Run migrations
-      run: docker-compose exec app php bin/console doctrine:migrations:migrate --env=test --no-interaction
+      run: docker-compose exec -T app php bin/console doctrine:migrations:migrate --env=test --no-interaction
 
     - name: Load fixtures
-      run: docker-compose exec app php bin/console doctrine:fixtures:load --env=test --no-interaction
+      run: docker-compose exec -T app php bin/console doctrine:fixtures:load --env=test --no-interaction
 
     - name: Run tests
-      run: docker-compose exec app vendor/bin/phpunit
+      run: docker-compose exec -T app vendor/bin/phpunit
 
     - name: Tear down Docker Compose
       run: docker-compose down
