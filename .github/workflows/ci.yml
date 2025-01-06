@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      postgres:
+      db:
         image: postgres:13
         env:
           POSTGRES_DB: symfony_test
@@ -29,31 +29,30 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.1'
-        extensions: mbstring, intl, pdo_pgsql
-        coverage: xdebug
-
-    - name: Install dependencies
-      run: composer install
+    - name: Set up Docker Compose
+      run: docker-compose up -d
 
     - name: Wait for PostgreSQL
       run: |
-        until pg_isready -h postgres -U symfony; do
+        until docker-compose exec db pg_isready -U symfony; do
           echo "Waiting for PostgreSQL to be ready..."
           sleep 1
         done
 
+    - name: Install dependencies
+      run: docker-compose exec app composer install
+
     - name: Create test database
-      run: php bin/console doctrine:database:create --env=test
+      run: docker-compose exec app php bin/console doctrine:database:create --env=test
 
     - name: Run migrations
-      run: php bin/console doctrine:migrations:migrate --env=test --no-interaction
+      run: docker-compose exec app php bin/console doctrine:migrations:migrate --env=test --no-interaction
 
     - name: Load fixtures
-      run: php bin/console doctrine:fixtures:load --env=test --no-interaction
+      run: docker-compose exec app php bin/console doctrine:fixtures:load --env=test --no-interaction
 
     - name: Run tests
-      run: vendor/bin/phpunit
+      run: docker-compose exec app vendor/bin/phpunit
+
+    - name: Tear down Docker Compose
+      run: docker-compose down
