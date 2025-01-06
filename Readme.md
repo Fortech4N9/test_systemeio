@@ -53,3 +53,21 @@ Content-Type: application/json
 }
 
 ## В файле class-diagram.png приставлена диаграмма классов проекта
+
+## Запуск тестов
+
+### Создание тестовой БД
+
+docker-compose exec app php bin/console doctrine:database:create --env=test
+
+### Запуск миграций для тестовой базы данных
+
+docker-compose exec app php bin/console doctrine:migrations:migrate --env=test --no-interaction
+
+### Запуск фикстур для тестовой базы данных
+
+docker-compose exec app php bin/console doctrine:fixtures:load --env=test --no-interaction
+
+### Запуск тестов
+
+docker-compose exec app vendor/bin/phpunit
